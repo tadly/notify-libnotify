@@ -1,0 +1,11 @@
+[Unit]
+Description=Notify - Android app client
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/notify-libnotify
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target
