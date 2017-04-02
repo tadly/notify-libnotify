@@ -32,7 +32,7 @@ NOTIFY_DEFAULT_PORT = 8022
 NOTIFY_CACHE_DIR   = os.path.expanduser('~/.cache/notify-libnotify/')
 NOTIFY_CONFIG_FILE = os.path.expanduser('~/.config/notify-libnotify.conf')
 
-Notify.init('notify-droid')
+Notify.init('notify-libnotify')
 notifications = {}
 
 mpr = mapper.Mapper()
