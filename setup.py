@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='Notify',
-    version='0.0.1',
+    version='0.0.2',
     description='libnotify client to be used with the android app.',
     author='linuxwhatelse',
     author_email='info@linuxwhatelse.com',

@@ -1,5 +1,5 @@
 pkgname=notify-libnotify
-pkgver=0.0.0
+pkgver=0.0.2
 pkgrel=1
 pkgdesc="libnotify client to be used with the android app."
 arch=('any')
