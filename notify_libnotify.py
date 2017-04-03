@@ -36,7 +36,27 @@ Notify.init('notify-libnotify')
 notifications = {}
 
 mpr = mapper.Mapper()
+__user_conf = None
 
+
+def __validator(path, headers):
+    if __user_conf is None:
+        return True
+
+    if 'username' not in __user_conf or 'password' not in __user_conf:
+        return True
+
+    if 'Authorization' in headers:
+        auth = headers['Authorization'].split()[1]
+        auth = base64.decodestring(auth.encode('utf-8')).decode('utf-8')
+
+        user_match = __user_conf['username'] == auth.split(':')[0]
+        pass_match = __user_conf['password'] == auth.split(':')[1]
+
+        if user_match and pass_match:
+            return True
+
+    return False
 
 def notify(uid, summary, body, icon='', urgency=None):
     if uid in notifications:
@@ -50,7 +70,6 @@ def notify(uid, summary, body, icon='', urgency=None):
     noti.show()
 
     notifications[uid] = noti
-    print('Added notification to stack. New size is: %i' % len(notifications))
 
 
 @mpr.s_url('/notification/posted/', 'POST')
@@ -97,7 +116,6 @@ def notification_removed(payload):
     if uid in notifications:
         notifications[uid].close()
         del notifications[uid]
-        print('Removed notification from stack. New size is: %i' % len(notifications))
 
     return {'status_code' : 200}
 
@@ -114,50 +132,51 @@ def call_missed(payload):
     return {'status_code' : 200}
 
 
-def _get_cli_port():
+def _get_user_conf():
+    if not os.path.exists(NOTIFY_CONFIG_FILE):
+        return None
+
+    user_conf = None
+    with open(NOTIFY_CONFIG_FILE, 'r') as f:
+        try:
+            user_conf = json.loads(f.read())
+        except:
+            print('Failed parsing config: "%s"' % NOTIFY_CONFIG_FILE)
+
+    print('Using config: "%s"' % NOTIFY_CONFIG_FILE)
+    return user_conf
+
+def _get_port():
+    # check for port provided via cli
     try:
         port = int(sys.argv[1])
     except:
         port = None
 
-    return port
-
-def _get_conf_port():
-    user_conf = None
-    if os.path.exists(NOTIFY_CONFIG_FILE):
-        with open(NOTIFY_CONFIG_FILE, 'r') as f:
-            try:
-                user_conf = json.loads(f.read())
-            except:
-                print('Failed parsing config at "%s"' % NOTIFY_CONFIG_FILE)
-                pass
-
-    port = None
-    if user_conf and 'port' in user_conf:
+    # check for port in config file
+    if not port and __user_conf and 'port' in __user_conf:
         try:
-            port = int(user_conf['port'])
+            port = int(__user_conf['port'])
         except:
             pass
+
+    # revert to default port
+    if not port:
+        port = NOTIFY_DEFAULT_PORT
 
     return port
 
 def main():
-    port = _get_cli_port()
-
-    if not port:
-        port = _get_conf_port()
-    
-    if not port:
-        print('No port provided, reverting to default "%i"'
-              % NOTIFY_DEFAULT_PORT)
-        port = NOTIFY_DEFAULT_PORT
+    global __user_conf
+    __user_conf = _get_user_conf()
 
     if not os.path.exists(NOTIFY_CACHE_DIR):
         os.makedirs(NOTIFY_CACHE_DIR)
 
     conf = mjs.Config()
     conf.address = '0.0.0.0'
-    conf.port = port
+    conf.port = _get_port()
+    conf.validate_callback = __validator
 
     server = mjs.ThreadedServer(conf)
 
