@@ -5,7 +5,7 @@ setup(
     version='0.0.3',
     description='libnotify client to be used with the android Notify app.',
     author='linuxwhatelse',
-    author_email='info@linuxwhatelse.com',
+    author_email='info@linuxwhatelse.de',
     license='GPLv3',
     install_requires = [
         'lwe-mapper',
